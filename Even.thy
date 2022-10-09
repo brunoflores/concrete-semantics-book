@@ -1,5 +1,7 @@
 theory Even imports Main begin
 
+(* Two definitions of the notion of evenness, and inductive and a recursive one: *)
+
 inductive ev :: "nat \<Rightarrow> bool" where
   ev0: "ev 0"
 | evSS: "ev n \<Longrightarrow> ev (Suc (Suc n))"
