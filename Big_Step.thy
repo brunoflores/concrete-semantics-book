@@ -44,6 +44,9 @@ values "{t. (SKIP, \<lambda>_. 0) \<Rightarrow> t}"
 declare big_step.intros [intro]
 thm big_step.induct
 
+lemmas big_step_induct = big_step.induct [split_format(complete)]
+thm big_step.induct
+
 subsection "Rule Inversion"
 
 (* Elimination rules: *)
@@ -86,6 +89,7 @@ lemma assign_simp:
   "(x ::= a, s) \<Rightarrow> s' \<longleftrightarrow> (s' = s (x := aval a s))"
 by auto
 
+text \<open>An example combining rule inversion and derivations\<close>
 lemma Seq_assoc:
   "(c1;; c2;; c3, s) \<Rightarrow> s' \<longleftrightarrow> (c1;; (c2;; c3), s) \<Rightarrow> s'"
 proof
