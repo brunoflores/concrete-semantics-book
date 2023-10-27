@@ -192,23 +192,52 @@ qed
 
 (* Exercise 3.5 *)
 datatype aexp2 =
-  N val
-| V vname
-| Plus aexp2 aexp2
-| Incr vname
+  N2 val
+| V2 vname
+| Plus2 aexp2 aexp2
+| Incr2 vname
 
 fun aval2 :: "aexp2 \<Rightarrow> state \<Rightarrow> val * state" where
-  "aval2 (N n) s = (n, s)"
-| "aval2 (V x) s = (s x, s)"
-| "aval2 (Plus a1 a2) s = (let (a1', s') = aval2 a1 s in
-                           let (a2', s'') = aval2 a2 s' in
-                           (a1' + a2', s''))"
-| "aval2 (Incr x) s = (let n = (s x) in
-                       let n' = n + 1 in
-                       (n, s (x := n')))"
+  "aval2 (N2 n) s = (n, s)"
+| "aval2 (V2 x) s = (s x, s)"
+| "aval2 (Plus2 a1 a2) s = (let (a1', s') = aval2 a1 s in
+                            let (a2', s'') = aval2 a2 s' in
+                            (a1' + a2', s''))"
+| "aval2 (Incr2 x) s = (let n = (s x) in
+                        let n' = n + 1 in
+                        (n, s (x := n')))"
 
 \<comment> \<open>x++ is a C-like post-increment: we return the value of x,
    then increment x and return that final state.\<close>
-lemma "aval2 (Plus (N 2) (Incr x)) (\<lambda>x. 2) = (4, (\<lambda>x. 2)(x := 3))" by simp
+lemma "aval2 (Plus2 (N2 2) (Incr2 x)) (\<lambda>x. 2) = (4, (\<lambda>x. 2)(x := 3))" by simp
+
+(* Exercise 3.6 *)
+datatype lexp =
+  Nl int
+| Vl vname
+| Plusl lexp lexp
+| Let vname lexp lexp
+
+fun lval :: "lexp \<Rightarrow> state \<Rightarrow> val" where
+  "lval (Nl n) s = n"
+| "lval (Vl x) s = s x"
+| "lval (Plusl e1 e2) s = lval e1 s + lval e2 s"
+| "lval (Let x e1 e2) s = lval e2 (s (x := lval e1 s))"
+
+lemma "lval (Let ''x'' (Nl 2) (Plusl (Vl ''x'') (Nl 3))) (\<lambda>x. 0) = 5" by simp
+
+fun inline :: "lexp \<Rightarrow> aexp" where
+  "inline (Nl n) = N n"
+| "inline (Vl x) = V x"
+| "inline (Plusl e1 e2) = Plus (inline e1) (inline e2)"
+| "inline (Let x e1 e2) = subst x (inline e1) (inline e2)"
+
+lemma "inline (Let ''x'' (Nl 2) (Plusl (Vl ''x'') (Nl 3))) = Plus (N 2) (N 3)"
+by simp
+
+lemma "aval (inline e) s = lval e s"
+  apply (induction e arbitrary: s)
+  apply (auto simp: substitution_lemma)
+done
 
 end
