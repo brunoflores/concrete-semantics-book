@@ -9,12 +9,16 @@ datatype aexp =
   N val
 | V vname
 | Plus aexp aexp
+| Times aexp aexp
+
+thm aexp.split
 
 (* Compute the value of an expression *)
 fun aval :: "aexp \<Rightarrow> state \<Rightarrow> val" where
   "aval (N n) _ = n"
 | "aval (V x) s = s x"
 | "aval (Plus a1 a2) s = aval a1 s + aval a2 s"
+| "aval (Times a1 a2) s = aval a1 s * aval a2 s"
 
 (* Examples *)
 value "aval (Plus (N 3) (V ''x'')) (\<lambda>x. 7)"
@@ -33,43 +37,13 @@ translations
 (* it allows us to... *)
 value "aval (Plus (V ''x'') (N 3)) <''x'' := 7>"
 
-(* Constant Folding *)
-
-(* Constant folding in a bottom-up manner *)
-fun asimp_const :: "aexp \<Rightarrow> aexp" where
-  "asimp_const (N n) = N n"
-| "asimp_const (V x) = V x"
-| "asimp_const (Plus a1 a2) =
-    (case (asimp_const a1, asimp_const a2) of
-       (N n1, N n2) \<Rightarrow> N (n1 + n2)
-     | (a1', a2') \<Rightarrow> Plus a1' a2')"
-
-lemma "asimp_const (Plus (N 1) (N 2)) = N 3" by simp
-lemma "asimp_const (Plus (N 1) (Plus (N 2) (N 3))) = N 6" by simp
-
-(* Correctness meas that [asimp_const] does not change the semantics,
-   that is, the value of its argument *)
-theorem aval_asimp_const: "aval (asimp_const a) s = aval a s"
-proof (induct a)
-  case (N x)
-  thus ?case by simp
-next
-  case (V x)
-  thus ?case by simp
-next
-  case (Plus a1 a2)
-  thus ?case by (auto split: aexp.split)
-qed
-
 (* Eliminate all occurrences of 0 in additions.
    Method: optimised versions of the constructors *)
 fun plus :: "aexp \<Rightarrow> aexp \<Rightarrow> aexp" where
-  "plus (N i1) (N i2) = N (i1 + i2)"
-| "plus (N i) a = (if i=0 then a else Plus (N i) a)"
-| "plus a (N i) = (if i=0 then a else Plus a (N i))"
+  "plus (N n1) (N n2) = N (n1 + n2)"
+| "plus (N n) a = (if n=0 then a else Plus (N n) a)"
+| "plus a (N n) = (if n=0 then a else Plus a (N n))"
 | "plus a1 a2 = Plus a1 a2"
-
-thm plus.induct
 
 (* It behaves like Plus under evaluation *)
 lemma aval_plus: "aval (plus a1 a2) s = aval a1 s + aval a2 s"
@@ -77,13 +51,33 @@ lemma aval_plus: "aval (plus a1 a2) s = aval a1 s + aval a2 s"
   apply auto
 done
 
-(* Replace plus for Plus in a bottom-up manner *)
+fun times :: "aexp \<Rightarrow> aexp \<Rightarrow> aexp" where
+  "times (N n1) (N n2) = N (n1 * n2)"
+| "times (N n) a = (if n=0 then N 0
+                    else if n=1 then a
+                    else Times (N n) a)"
+| "times a (N n) = (if n=0 then N 0
+                    else if n=1 then a
+                    else Times a (N n))"
+| "times a1 a2 = Times a1 a2"
+
+(* It behaves list Times under evaluation *)
+lemma aval_times: "aval (times a1 a2) s = aval a1 s * aval a2 s"
+  apply (induction a1 a2 rule: times.induct)
+  apply auto
+done
+
+(* Replace plus for Plus and times for Times in a bottom-up manner *)
 fun asimp :: "aexp \<Rightarrow> aexp" where
   "asimp (N n) = N n"
 | "asimp (V x) = V x"
 | "asimp (Plus a1 a2) = plus (asimp a1) (asimp a2)"
+| "asimp (Times a1 a2) = times (asimp a1) (asimp a2)"
 
-value "asimp (Plus (Plus (N 0) (N 0)) (Plus (V ''x'') (N 0)))"
+lemma "asimp (Plus (Plus (N 0) (N 0)) (Plus (V ''x'') (N 0))) = V (''x'')" by simp
+lemma "asimp (Times (N 0) (N 1)) = N 0" by simp
+lemma "asimp (Times (N 1) (N 2)) = N 2" by simp
+lemma "asimp (Times (N 2) (N 2)) = N 4" by simp
 
 theorem aval_asimp: "aval (asimp a) s = aval a s"
 proof (induct a)
@@ -95,6 +89,9 @@ next
 next
   case (Plus a1 a2)
   thus ?case by (simp add: aval_plus)
+next
+  case (Times a1 a2)
+  thus ?case by (simp add: aval_times)
 qed
 
 (* Exercise 3.1 *)
@@ -102,20 +99,24 @@ fun optimal :: "aexp \<Rightarrow> bool" where
   "optimal (N _) = True"
 | "optimal (V _) = True"
 | "optimal (Plus (N _) (N _)) = False"
-| "optimal (Plus a1 a2) = (case (optimal a1, optimal a2) of
-                             (True, True) \<Rightarrow> True
-                           | _            \<Rightarrow> False)"
+| "optimal (Times (N _) (N _)) = False"
+| "optimal (Plus a1 a2) = (case (optimal a1, optimal a2) of (True, True) \<Rightarrow> True | _ \<Rightarrow> False)"
+| "optimal (Times a1 a2) = (case (optimal a1, optimal a2) of (True, True) \<Rightarrow> True | _ \<Rightarrow> False)"
 
-theorem const_folded: "optimal (asimp_const a)"
+theorem const_folded: "optimal (asimp a)"
 proof (induct a)
   case (N x)
-  thus ?case by simp
+  then show ?case by simp
 next
   case (V x)
-  thus ?case by simp
+  then show ?case by simp
 next
   case (Plus a1 a2)
-  thus ?case by (auto split: aexp.split)
+  \<comment> \<open>Used to work with (auto split: aexp.split) before adding Times.\<close>
+  then show ?case sorry
+next
+  case (Times a1 a2)
+  then show ?case sorry
 qed
 
 (* Exercise 3.2 *)
@@ -126,6 +127,7 @@ fun full_asimp :: "aexp \<Rightarrow> aexp" where
     (case (full_asimp a1, full_asimp a2) of
        (N n1, Plus (V x) (N n2)) \<Rightarrow> Plus (V x) (N (n1 + n2))
      | (a1', a2') \<Rightarrow> Plus a1' a2')"
+| "full_asimp (Times a1 a2) = Times a1 a2"
 
 lemma "full_asimp (Plus (N 1) (Plus (V x) (N 2))) = Plus (V x) (N 3)" by simp
 
@@ -139,6 +141,9 @@ next
 next
   case (Plus a1 a2)
   thus ?case by (auto split: aexp.split)
+next
+  case (Times a1 a2)
+  thus ?case by (auto split: aexp.split)
 qed
 
 (* Exercise 3.3 *)
@@ -148,6 +153,7 @@ fun subst :: "vname \<Rightarrow> aexp \<Rightarrow> aexp \<Rightarrow> aexp" wh
   "subst x' a (N n) = N n"
 | "subst x' a (V x) = (if x' = x then a else V x)"
 | "subst x' a (Plus a1 a2) = Plus (subst x' a a1) (subst x' a a2)"
+| "subst x' a (Times a1 a2) = Times (subst x' a a1) (subst x' a a2)"
 
 lemma "subst ''x1'' (N 3) (Plus (V ''x1'') (V ''y'')) = Plus (N 3) (V ''y'')"
 by simp
@@ -164,6 +170,9 @@ next
 next
   case (Plus e1 e2)
   thus ?case by simp
+next
+  case (Times e1 e2)
+  thus ?case by simp
 qed
 
 lemma "aval a1 s = aval a2 s \<Longrightarrow> aval (subst x a1 e) s = aval (subst x a2 e) s"
@@ -175,6 +184,9 @@ next
   thus ?case by simp
 next
   case (Plus e1 e2)
+  thus ?case by simp
+next
+  case (Times e1 e2)
   thus ?case by simp
 qed
 
