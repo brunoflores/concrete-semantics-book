@@ -190,4 +190,25 @@ next
   thus ?case by simp
 qed
 
+(* Exercise 3.5 *)
+datatype aexp2 =
+  N val
+| V vname
+| Plus aexp2 aexp2
+| Incr vname
+
+fun aval2 :: "aexp2 \<Rightarrow> state \<Rightarrow> val * state" where
+  "aval2 (N n) s = (n, s)"
+| "aval2 (V x) s = (s x, s)"
+| "aval2 (Plus a1 a2) s = (let (a1', s') = aval2 a1 s in
+                           let (a2', s'') = aval2 a2 s' in
+                           (a1' + a2', s''))"
+| "aval2 (Incr x) s = (let n = (s x) in
+                       let n' = n + 1 in
+                       (n, s (x := n')))"
+
+\<comment> \<open>x++ is a C-like post-increment: we return the value of x,
+   then increment x and return that final state.\<close>
+lemma "aval2 (Plus (N 2) (Incr x)) (\<lambda>x. 2) = (4, (\<lambda>x. 2)(x := 3))" by simp
+
 end
