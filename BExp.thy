@@ -73,4 +73,37 @@ by auto
 lemma "bval (le a1 a2) s = (aval a1 s \<le> aval a2 s)"
 by auto
 
+(* Exercise 3.8 *)
+datatype ifexp =
+  Bc2 bool
+| If ifexp ifexp ifexp
+| Less2 aexp aexp
+
+(* It is not the case that both bexp are false: *)
+fun or :: "bexp \<Rightarrow> bexp \<Rightarrow> bexp" where
+  "or e1 e2 = not (and (not e1) (not e2))"
+
+fun ifval :: "ifexp \<Rightarrow> state \<Rightarrow> bool" where
+  "ifval (Bc2 b) _ = b"
+| "ifval (If b e1 e2) s = (if (ifval b s) then ifval e1 s else ifval e2 s)"
+| "ifval (Less2 e1 e2) s = (aval e1 s < aval e2 s)"
+
+fun b2ifexp :: "bexp \<Rightarrow> ifexp" where
+  "b2ifexp (Bc b) = Bc2 b"
+| "b2ifexp (Not e) = If (b2ifexp e) (Bc2 False) (Bc2 True)"
+| "b2ifexp (And e1 e2) = If (b2ifexp e1) (b2ifexp e2) (Bc2 False)"
+| "b2ifexp (Less a1 a2) = Less2 a1 a2"
+
+fun if2bexp :: "ifexp \<Rightarrow> bexp" where
+  "if2bexp (Bc2 b) = Bc b"
+| "if2bexp (If e1 e2 e3) = or (and (if2bexp e1) (if2bexp e2)) (and (not (if2bexp e1)) (if2bexp e3))"
+| "if2bexp (Less2 a1 a2) = Less a1 a2"
+
+(* Prove their correctness: they preserve the value of an expression. *)
+lemma "ifval (b2ifexp b) s = bval b s"
+  by (induction b, auto)
+
+lemma "bval (if2bexp b) s = ifval b s"
+  by (induction b, auto)
+
 end
