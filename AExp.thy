@@ -46,7 +46,7 @@ fun plus :: "aexp \<Rightarrow> aexp \<Rightarrow> aexp" where
 | "plus a1 a2 = Plus a1 a2"
 
 (* It behaves like Plus under evaluation *)
-lemma aval_plus: "aval (plus a1 a2) s = aval a1 s + aval a2 s"
+lemma aval_plus[simp]: "aval (plus a1 a2) s = aval a1 s + aval a2 s"
   apply (induction a1 a2 rule: plus.induct)
   apply auto
 done
@@ -62,7 +62,7 @@ fun times :: "aexp \<Rightarrow> aexp \<Rightarrow> aexp" where
 | "times a1 a2 = Times a1 a2"
 
 (* It behaves list Times under evaluation *)
-lemma aval_times: "aval (times a1 a2) s = aval a1 s * aval a2 s"
+lemma aval_times[simp]: "aval (times a1 a2) s = aval a1 s * aval a2 s"
   apply (induction a1 a2 rule: times.induct)
   apply auto
 done
@@ -79,7 +79,7 @@ lemma "asimp (Times (N 0) (N 1)) = N 0" by simp
 lemma "asimp (Times (N 1) (N 2)) = N 2" by simp
 lemma "asimp (Times (N 2) (N 2)) = N 4" by simp
 
-theorem aval_asimp: "aval (asimp a) s = aval a s"
+theorem aval_asimp[simp]: "aval (asimp a) s = aval a s"
 proof (induct a)
   case (N x)
   thus ?case by simp
