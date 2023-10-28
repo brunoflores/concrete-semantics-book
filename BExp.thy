@@ -60,4 +60,17 @@ lemma "bsimp (And (Less (N 1) (N 0)) (Bc True)) = Bc False" by simp
 theorem "bval (bsimp b) s = bval b s"
 by (induction b) simp_all
 
+(* Exercise 3.7 *)
+fun eq :: "aexp \<Rightarrow> aexp \<Rightarrow> bexp" where
+  "eq a b = and (not (less a b)) (not (less b a))"
+
+fun le :: "aexp \<Rightarrow> aexp \<Rightarrow> bexp" where
+  "le a b = not (less b a)"
+
+lemma "bval (eq a1 a2) s = (aval a1 s = aval a2 s)"
+by auto
+
+lemma "bval (le a1 a2) s = (aval a1 s \<le> aval a2 s)"
+by auto
+
 end
