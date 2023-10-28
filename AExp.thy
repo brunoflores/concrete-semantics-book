@@ -160,7 +160,7 @@ by simp
 
 (* The "substitution lemma" says that we can either substitute first
    and evaluate afterwards or evaluate with an updated state. *)
-lemma substitution_lemma: "aval (subst x a e) s = aval e (s (x := aval a s))"
+lemma substitution_lemma[simp]: "aval (subst x a e) s = aval e (s (x := aval a s))"
 proof (induct e)
   case (N x)
   thus ?case by simp
@@ -236,8 +236,6 @@ lemma "inline (Let ''x'' (Nl 2) (Plusl (Vl ''x'') (Nl 3))) = Plus (N 2) (N 3)"
 by simp
 
 lemma "aval (inline e) s = lval e s"
-  apply (induction e arbitrary: s)
-  apply (auto simp: substitution_lemma)
-done
+by (induct e arbitrary: s) auto
 
 end
