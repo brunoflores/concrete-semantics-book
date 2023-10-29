@@ -48,7 +48,9 @@ fun comp :: "aexp \<Rightarrow> instr list" where
 | "comp (Plus e1 e2) = comp e1 @ comp e2 @ [ADD]"
 | "comp (Times e1 e2) = comp e1 @ comp e2 @ [TIMES]"
 
-value "comp (Plus (Plus (V ''x'') (N 1)) (V ''z''))"
+lemma "comp (Plus (Plus (V ''x'') (N 42)) (V ''z''))
+       = [LOAD ''x'', LOADI 42, ADD, LOAD ''z'', ADD]"
+by simp
 
 (* The correctness statement says that executing a compiled expression
    is the same as putting the value of the expression on the stack: *)
