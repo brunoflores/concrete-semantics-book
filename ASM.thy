@@ -66,4 +66,55 @@ by (induction instr1 arbitrary: stack, auto split: option.split)
 theorem exec_comp: "exec (comp a) state stack = Some (aval a state # stack)"
 by (induction a arbitrary: stack, auto)
 
+(* Exercise 3.11 *)
+type_synonym reg = nat
+
+datatype instr0 =
+  LDI int reg
+| LD vname reg
+| ADD reg reg (* [ADD r1 r2] adds register [r1] to [r2] into [r2] *)
+| MUL reg reg (* [MUL r1 r2] multiplies register [r1] by [r2] into [r2] *)
+
+fun exec10 :: "instr0 \<Rightarrow> state \<Rightarrow> (reg \<Rightarrow> val) \<Rightarrow> reg \<Rightarrow> val" where
+  "exec10 (LDI n r) _ regfile = regfile (r := n)"
+| "exec10 (LD x r) state regfile = regfile (r := state x)"
+| "exec10 (ADD r1 r2) _ regfile = regfile (r2 := regfile r1 + regfile r2)"
+| "exec10 (MUL r1 r2) _ regfile = regfile (r2 := regfile r1 * regfile r2)"
+
+fun exec0 :: "instr0 list \<Rightarrow> state \<Rightarrow> (reg \<Rightarrow> val) \<Rightarrow> reg \<Rightarrow> val" where
+  "exec0 [] _ regfile = regfile"
+| "exec0 (instr # rest) state regfile
+                                = exec0 rest state (exec10 instr state regfile)"
+
+(* The compiler in this exercise takes an arithmetic expression [a] and a
+   register [r] and produces a list of instructions whose execution places
+   the value of [a] into [r].
+
+   The registers [> r] should be used in a stack-like fashion for intermediate
+   results. The ones[< r] should be left alone. *)
+
+fun comp0 :: "aexp \<Rightarrow> reg \<Rightarrow> instr0 list" where
+  "comp0 (N n) r = [LDI n r]"
+| "comp0 (V x) r = [LD x r]"
+| "comp0 (Plus e1 e2) r = comp0 e1 r @ comp0 e2 (r+1) @ [ADD (r + 1) r]"
+| "comp0 (Times e1 e2) r = comp0 e1 r @ comp0 e2 (r+1) @ [MUL (r + 1) r]"
+
+lemma "comp0 (N 0) 42 = [LDI 0 42]" by simp
+value "comp0 (Plus (N 2) (Times (N 2) (N 20))) 32"
+
+(* Compute value 42 in register 32. *)
+lemma "(exec0 (comp0 (Plus (N 2) (Times (N 2) (N 20))) 32) <> (\<lambda>_. 0)) 32
+       = 42"
+by simp
+
+lemma exec_append: "exec0 (xs @ ys) s rs = exec0 ys s (exec0 xs s rs)"
+by (induction xs arbitrary: rs, auto)
+
+(* Executing a program in register [q] does not change registers [< q]. *)
+lemma exec_unchanged_regs: "r < q \<Longrightarrow> exec0 (comp0 a q) s rs r = rs r"
+by (induction a arbitrary: rs r q, auto simp: exec_append)
+
+theorem comp0_correct: "exec0 (comp0 a r) s rs r = aval a s"
+by (induct a arbitrary: rs r, auto simp: exec_append exec_unchanged_regs)
+
 end
