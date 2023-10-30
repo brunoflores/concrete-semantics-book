@@ -12,4 +12,10 @@ inductive small_step :: "com * state \<Rightarrow> com * state \<Rightarrow> boo
 | While:   "(WHILE b DO c, s) \<rightarrow>
             (IF b THEN c;; WHILE b DO c ELSE SKIP, s)"
 
+(* Define the execution of a program as the reflexive transitive
+   closure of the small_step judgement using the star operator. *)
+abbreviation
+  small_steps :: "com * state \<Rightarrow> com * state \<Rightarrow> bool" (infix "\<rightarrow>*" 55)
+where "x \<rightarrow>* y \<equiv> star small_step x y"
+
 end
