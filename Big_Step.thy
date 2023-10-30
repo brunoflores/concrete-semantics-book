@@ -2,28 +2,30 @@ subsection "Big-Step Operational Semantics of Commands"
 
 theory Big_Step imports Com begin
 
-text "The big-step semantics is a straight-forward inductive definition with concrete syntax."
+text \<open>
+The big-step semantics is a straight-forward inductive definition
+with concrete syntax.
+\<close>
 
+(* The big-step rules of IMP *)
 inductive big_step :: "com \<times> state \<Rightarrow> state \<Rightarrow> bool" (infix "\<Rightarrow>" 55) where
+  Skip: "       (SKIP, s) \<Rightarrow> s"
+| Assign: "     (x ::= a, s) \<Rightarrow> s (x := aval a s)"
 
-  Skip: "(SKIP, s) \<Rightarrow> s"
+| Seq: "        \<lbrakk> (c1, s1) \<Rightarrow> s2; (c2, s2) \<Rightarrow> s3 \<rbrakk> \<Longrightarrow>
+                (c1;; c2, s1) \<Rightarrow> s3"
 
-| Assign: "(x ::= a, s) \<Rightarrow> s (x := aval a s)"
+| IfTrue: "     \<lbrakk> bval b s = True; (c1, s) \<Rightarrow> t \<rbrakk> \<Longrightarrow>
+                (IF b THEN c1 ELSE c2, s) \<Rightarrow> t"
 
-| Seq: "\<lbrakk>(c1, s1) \<Rightarrow> s2; (c1, s2) \<Rightarrow> s3\<rbrakk> \<Longrightarrow>
-        (c1;; c2, s1) \<Rightarrow> s3"
+| IfFalse: "    \<lbrakk> bval b s = False; (c2, s) \<Rightarrow> t \<rbrakk> \<Longrightarrow>
+                (IF b THEN c1 ELSE c2, s) \<Rightarrow> t"
 
-| IfTrue: "\<lbrakk>bval b s; (c1, s) \<Rightarrow> t\<rbrakk> \<Longrightarrow>
-           (IF b THEN c1 ELSE c2, s) \<Rightarrow> t"
+| WhileFalse: " bval b s = False \<Longrightarrow>
+                (WHILE b DO c, s) \<Rightarrow> s"
 
-| IfFalse: "\<lbrakk>\<not>bval b s; (c2, s) \<Rightarrow> t\<rbrakk> \<Longrightarrow>
-            (IF b THEN c1 ELSE c2, s) \<Rightarrow> t"
-
-| WhileFalse: "\<not>bval b s \<Longrightarrow>
-               (WHILE b DO c, s) \<Rightarrow> s"
-
-| WhileTrue: "\<lbrakk>bval b s; (c, s1) \<Rightarrow> s2; (WHILE b DO c, s2) \<Rightarrow> s3\<rbrakk> \<Longrightarrow>
-              (WHILE b DO c, s1) \<Rightarrow> s3"
+| WhileTrue: "  \<lbrakk> bval b s1 = True; (c, s1) \<Rightarrow> s2; (WHILE b DO c, s2) \<Rightarrow> s3 \<rbrakk> \<Longrightarrow>
+                (WHILE b DO c, s1) \<Rightarrow> s3"
 
 schematic_goal ex: "(''x'' ::= N 5;; ''y'' ::= V ''x'', s) \<Rightarrow> ?t"
 apply (rule Seq)
@@ -32,14 +34,18 @@ apply simp
 apply (rule Assign)
 done
 
+thm ex
 thm ex [simplified]
 
+(* We want to execute the big-step rules *)
 code_pred big_step.
 
-(* These didn't work:
-values "{map t [''x''] |t. (SKIP, <''x'' := 42>) \<Rightarrow> t}"
 values "{t. (SKIP, \<lambda>_. 0) \<Rightarrow> t}"
-*)
+values "{map t [''x''] |t. (SKIP, <''x'' := 42>) \<Rightarrow> t}"
+values "{map t [''x''] |t. (''x'' ::= N 2, <''x'' := 42>) \<Rightarrow> t}"
+values "{map t [''x'',''y''] |t.
+  (WHILE Less (V ''x'') (V ''y'') DO (''x'' ::= Plus (V ''x'') (N 5)),
+   <''x'' := 0, ''y'' := 13>) \<Rightarrow> t}"
 
 declare big_step.intros [intro]
 thm big_step.induct
