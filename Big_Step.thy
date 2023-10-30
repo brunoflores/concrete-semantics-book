@@ -9,23 +9,23 @@ with concrete syntax.
 
 (* The big-step rules of IMP *)
 inductive big_step :: "com \<times> state \<Rightarrow> state \<Rightarrow> bool" (infix "\<Rightarrow>" 55) where
-  Skip: "       (SKIP, s) \<Rightarrow> s"
-| Assign: "     (x ::= a, s) \<Rightarrow> s (x := aval a s)"
+  Skip:        "(SKIP, s) \<Rightarrow> s"
+| Assign:      "(x ::= a, s) \<Rightarrow> s (x := aval a s)"
 
-| Seq: "        \<lbrakk> (c1, s1) \<Rightarrow> s2; (c2, s2) \<Rightarrow> s3 \<rbrakk> \<Longrightarrow>
-                (c1;; c2, s1) \<Rightarrow> s3"
+| Seq:         "\<lbrakk> (c\<^sub>1, s\<^sub>1) \<Rightarrow> s\<^sub>2; (c\<^sub>2, s\<^sub>2) \<Rightarrow> s\<^sub>3 \<rbrakk> \<Longrightarrow>
+                (c\<^sub>1;; c\<^sub>2, s\<^sub>1) \<Rightarrow> s\<^sub>3"
 
-| IfTrue: "     \<lbrakk> bval b s; (c1, s) \<Rightarrow> t \<rbrakk> \<Longrightarrow>
-                (IF b THEN c1 ELSE c2, s) \<Rightarrow> t"
+| IfTrue:      "\<lbrakk> bval b s; (c\<^sub>1, s) \<Rightarrow> t \<rbrakk> \<Longrightarrow>
+                (IF b THEN c\<^sub>1 ELSE c\<^sub>2, s) \<Rightarrow> t"
 
-| IfFalse: "    \<lbrakk> \<not> bval b s; (c2, s) \<Rightarrow> t \<rbrakk> \<Longrightarrow>
-                (IF b THEN c1 ELSE c2, s) \<Rightarrow> t"
+| IfFalse:     "\<lbrakk> \<not> bval b s; (c\<^sub>2, s) \<Rightarrow> t \<rbrakk> \<Longrightarrow>
+                (IF b THEN c1 ELSE c\<^sub>2, s) \<Rightarrow> t"
 
-| WhileFalse: " \<not> bval b s \<Longrightarrow>
+| WhileFalse:  "\<not> bval b s \<Longrightarrow>
                 (WHILE b DO c, s) \<Rightarrow> s"
 
-| WhileTrue: "  \<lbrakk> bval b s1; (c, s1) \<Rightarrow> s2; (WHILE b DO c, s2) \<Rightarrow> s3 \<rbrakk> \<Longrightarrow>
-                (WHILE b DO c, s1) \<Rightarrow> s3"
+| WhileTrue:   "\<lbrakk> bval b s\<^sub>1; (c, s\<^sub>1) \<Rightarrow> s\<^sub>2; (WHILE b DO c, s\<^sub>2) \<Rightarrow> s\<^sub>3 \<rbrakk> \<Longrightarrow>
+                (WHILE b DO c, s\<^sub>1) \<Rightarrow> s\<^sub>3"
 
 schematic_goal ex: "(''x'' ::= N 5;; ''y'' ::= V ''x'', s) \<Rightarrow> ?t"
 apply (rule Seq)
