@@ -56,7 +56,6 @@ thm big_step.induct
 subsection "Rule Inversion"
 
 (* Elimination rules: *)
-
 inductive_cases SkipE [elim!]: "(SKIP, s) \<Rightarrow> t"
 thm SkipE
 
