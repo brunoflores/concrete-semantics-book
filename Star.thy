@@ -54,4 +54,7 @@ done
 theorem "S w = T w"
 by (auto intro: T_implies_S S_implies_T)
 
+(* Exercise 4.6 TODO *)
+(* Exercise 4.7 TODO *)
+
 end
