@@ -34,4 +34,33 @@ by (induct t, auto)
 theorem ins_correct: "ord t \<Longrightarrow> ord (ins i t)"
 by (induct t, auto simp: set_correct)
 
+thm refl[of "a"]
+thm conjI
+thm conjI[OF refl[of "a"] refl[of "b"]]
+
+inductive ev :: "nat \<Rightarrow> bool" where
+  ev0: "ev 0"
+| evSS: "ev n \<Longrightarrow> ev (Suc (Suc n))"
+
+thm ev.induct
+
+lemma "ev (Suc (Suc (Suc (Suc 0))))"
+  apply (rule evSS)
+  apply (rule evSS)
+  apply (rule ev0)
+done
+
+fun evn :: "nat \<Rightarrow> bool" where
+  "evn 0 = True"
+| "evn (Suc 0) = False"
+| "evn (Suc (Suc n)) = evn n"
+
+lemma "ev m \<Longrightarrow> evn m"
+by (induction m rule: ev.induct, simp_all)
+
+lemma "evn n \<Longrightarrow> ev n"
+by (induction n rule: evn.induct, simp_all add: ev0 evSS)
+
+declare ev.intros [simp, intro]
+
 end
