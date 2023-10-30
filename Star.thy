@@ -26,4 +26,32 @@ inductive iter :: "('a \<Rightarrow> 'a \<Rightarrow> bool) \<Rightarrow> int \<
 theorem "star r x y \<Longrightarrow> \<exists>n. iter r n x y"
 by (induction rule: star.induct, auto intro: iter_refl iter_step)
 
+(* Exercise 4.5 *)
+datatype alpha = alpha | beta
+
+inductive S :: "alpha list \<Rightarrow> bool" where
+  S_1: "S []"
+| S_2: "S w \<Longrightarrow> S (alpha # w @ [beta])"
+| S_3: "S w \<Longrightarrow> S x \<Longrightarrow> S (w @ x)"
+
+inductive T :: "alpha list \<Rightarrow> bool" where
+  T_1: "T []"
+| T_2: "T w \<Longrightarrow> T x \<Longrightarrow> T (w @ [alpha] @ x @ [beta])"
+
+theorem T_implies_S: "T w \<Longrightarrow> S w"
+by (induction rule: T.induct, auto intro: S_1 S_2 S_3)
+
+lemma TT: "T w \<Longrightarrow> T x \<Longrightarrow> T (x @ w)"
+by (induction rule: T.induct, simp, metis T.simps append.assoc)
+
+theorem S_implies_T: "S w \<Longrightarrow> T w"
+  apply(induction rule:S.induct)
+  apply(auto intro: T_1 T_2)
+  apply(metis T.simps T_1 append.left_neutral append_Cons)
+  apply(auto intro: TT)
+done
+
+theorem "S w = T w"
+by (auto intro: T_implies_S S_implies_T)
+
 end
