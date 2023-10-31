@@ -148,8 +148,47 @@ fun acomp :: "aexp \<Rightarrow> instr list" where
 | "acomp (Plus a1 a2) = acomp a1 @ acomp a2 @ [ADD]"
 | "acomp (Times a1 a2) = acomp a1 @ acomp a2 @ [MUL]"
 
+(* Proof is by induction on the arithmetic expression. *)
 lemma acomp_correct [intro]:
   "acomp a \<turnstile> (0, s, stk) \<rightarrow>* (size(acomp a), s, (aval a s) # stk)"
 by (induction a arbitrary: stk) fastforce+
+
+(* The [bexp] compiler takes two further parameters in addition to
+   a boolean expression [b]: an offset [n] and a flag that determines
+   for which value of [b] the generated code should jump to offset [n]. *)
+fun bcomp :: "bexp \<Rightarrow> bool \<Rightarrow> int \<Rightarrow> instr list" where
+  "bcomp (Bc v) f n = (if v=f then [JMP n] else [])"
+| "bcomp (Not b) f n = bcomp b (\<not>f) n"
+| "bcomp (And b1 b2) f n =
+     (let cb2 = bcomp b2 f n in
+      let m = if f then size cb2 else (size cb2)+n in
+      let cb1 = bcomp b1 False m in \<comment> \<open>Shortcut: jump out on false\<close>
+        cb1 @ cb2)"
+| "bcomp (Less a1 a2) f n =
+     acomp a1 @ acomp a2 @ (if f then [JMPLESS n] else [JMPGE n])"
+
+(* Boolean constants are optimised away: *)
+lemma "bcomp (And (Bc True) (Bc True)) False 3 = []" by simp
+
+(* Correctness of [bcomp]:
+     1) The stack and state should remain unchanged, and
+     2) The program counter should indicate if the expression
+        evaluated to True or False. *)
+lemma bcomp_correct [intro]:
+  fixes n :: int
+  shows
+  "0 \<le> n \<Longrightarrow>
+   bcomp b f n \<turnstile>
+   (0, s, stk) \<rightarrow>* (size(bcomp b f n) + (if f = bval b s then n else 0), s, stk)"
+proof(induction b arbitrary: f n)
+  case Not
+  from Not(1)[where f="~f"] Not(2) show ?case by fastforce
+next
+  case (And b1 b2)
+  from And(1)[of "if f then size(bcomp b2 f n) else size(bcomp b2 f n) + n"
+                 "False"]
+       And(2)[of n f] And(3)
+  show ?case by fastforce
+qed fastforce+
 
 end
