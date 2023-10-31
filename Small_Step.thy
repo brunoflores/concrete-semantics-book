@@ -134,4 +134,22 @@ next
     by (metis While seq_comp small_step.IfTrue star.step[of small_step])
 qed
 
+(* The other direction: small-step implies big-step. *)
+lemma small1_big_continue:
+  "cs \<rightarrow> cs' \<Longrightarrow> cs' \<Rightarrow> t \<Longrightarrow> cs \<Rightarrow> t"
+  apply (induction arbitrary: t rule: small_step.induct)
+  apply auto
+done
+
+lemma small_to_big:
+  "cs \<rightarrow>* (SKIP,t) \<Longrightarrow> cs \<Rightarrow> t"
+  apply (induction cs "(SKIP, t)" rule: star.induct)
+  apply (auto intro: small1_big_continue)
+done
+
+(* Finally, the equivalence theorem: *)
+theorem big_iff_small:
+  "cs \<Rightarrow> t = cs \<rightarrow>* (SKIP, t)"
+by (metis big_to_small small_to_big)
+
 end
