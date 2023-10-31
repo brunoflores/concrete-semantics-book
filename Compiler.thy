@@ -89,16 +89,52 @@ by (induction rule: star.induct) (fastforce intro: star.step exec1_appendR)+
 lemma exec1_appendL:
   fixes i i' :: int
   shows
-  "P \<turnstile> (i,s,stk) \<rightarrow> (i',s',stk') \<Longrightarrow>
-   P' @ P \<turnstile> (size(P')+i,s,stk) \<rightarrow> (size(P')+i',s',stk')"
+  "P \<turnstile> (i, s, stk) \<rightarrow> (i', s', stk') \<Longrightarrow>
+   P' @ P \<turnstile> (size(P')+i, s, stk) \<rightarrow> (size(P')+i', s', stk')"
 unfolding exec1_def
 by (auto simp del: iexec.simps)
 
 lemma exec_appendL:
   fixes i i' :: int
   shows
- "P \<turnstile> (i,s,stk) \<rightarrow>* (i',s',stk')  \<Longrightarrow>
-  P' @ P \<turnstile> (size(P')+i,s,stk) \<rightarrow>* (size(P')+i',s',stk')"
+  "P \<turnstile> (i, s, stk) \<rightarrow>* (i', s', stk')  \<Longrightarrow>
+   P' @ P \<turnstile> (size(P')+i, s, stk) \<rightarrow>* (size(P')+i', s', stk')"
 by (induction rule: exec_induct) (blast intro: star.step exec1_appendL)+
+
+text\<open>Now we specialise the above lemmas to enable automatic proofs of
+\<^prop>\<open>P \<turnstile> c \<rightarrow>* c'\<close> where \<open>P\<close> is a mixture of concrete instructions and
+pieces of code that we already know how they execute (by induction), combined
+by \<open>@\<close> and \<open>#\<close>. Backward jumps are not supported.
+The details should be skipped on a first reading.
+
+If we have just executed the first instruction of the program, drop it:\<close>
+
+lemma exec_Cons_1 [intro]:
+  "P \<turnstile> (0, s, stk) \<rightarrow>* (j, t, stk') \<Longrightarrow>
+  instr # P \<turnstile> (1, s, stk) \<rightarrow>* (1+j, t, stk')"
+by (drule exec_appendL[where P'="[instr]"]) simp
+
+lemma exec_appendL_if [intro]:
+  fixes i i' j :: int
+  shows
+  "size P' <= i \<Longrightarrow>
+   P \<turnstile> (i - size P', s, stk) \<rightarrow>* (j, s', stk') \<Longrightarrow>
+   i' = size P' + j \<Longrightarrow>
+   P' @ P \<turnstile> (i, s, stk) \<rightarrow>* (i', s', stk')"
+by (drule exec_appendL[where P'=P']) simp
+
+(* Split the execution of a compound program up into the execution of its
+   parts. *)
+lemma exec_append_trans [intro]:
+  fixes i' i'' j'' :: int
+  shows
+  "P \<turnstile> (0, s, stk) \<rightarrow>* (i', s', stk') \<Longrightarrow>
+   size P \<le> i' \<Longrightarrow>
+   P' \<turnstile>  (i' - size P, s', stk') \<rightarrow>* (i'', s'', stk'') \<Longrightarrow>
+   j'' = size P + i'' \<Longrightarrow>
+   P @ P' \<turnstile> (0, s, stk) \<rightarrow>* (j'', s'', stk'')"
+by (metis star_trans[OF exec_appendR exec_appendL_if])
+
+declare Let_def [simp]
 
 end
