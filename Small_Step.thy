@@ -21,6 +21,8 @@ where "x \<rightarrow>* y \<equiv> star small_step x y"
 (* Execution *)
 code_pred small_step .
 
+(* This will "trace" the intermediate program configurations
+   while walking the small-step semantics. *)
 values "{ (c', map t [''x'',''y'',''z'']) |c' t.
   (''x'' ::= V ''z'';; ''y'' ::= V ''x'', <''x'' := 3, ''y'' := 7, ''z'' := 5>)
   \<rightarrow>* (c',t) }"
