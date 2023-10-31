@@ -71,4 +71,16 @@ values
     [LOAD ''y'', STORE ''x''] \<turnstile>
     (0, <''x'' := 3, ''y'' := 4>, []) \<rightarrow>* (i, t, stk)}"
 
+(* Show that execution results are preserved if we append
+   additional code to the left or right of a program. *)
+lemma iexec_shift [simp]:
+  "((n+i', s', stk') = iexec x (n+i, s, stk)) = ((i', s', stk') = iexec x (i, s, stk))"
+by (auto split: instr.split)
+
+lemma exec1_appendR: "P \<turnstile> c \<rightarrow> c' \<Longrightarrow> P@P' \<turnstile> c \<rightarrow> c'"
+by (auto simp: exec1_def)
+
+lemma exec_appendR: "P \<turnstile> c \<rightarrow>* c' \<Longrightarrow> P@P' \<turnstile> c \<rightarrow>* c'"
+by (induction rule: star.induct) (fastforce intro: star.step exec1_appendR)+
+
 end
