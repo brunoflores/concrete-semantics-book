@@ -11,6 +11,14 @@ code_pred star .
 lemma star_trans: "star r x y \<Longrightarrow> star r y z \<Longrightarrow> star r x z"
 by (induction rule: star.induct, assumption, metis step)
 
+lemmas star_induct =
+  star.induct[of "r:: 'a*'b \<Rightarrow> 'a*'b \<Rightarrow> bool", split_format(complete)]
+
+declare star.refl[simp,intro]
+
+lemma star_step1[simp, intro]: "r x y \<Longrightarrow> star r x y"
+by(metis star.refl star.step)
+
 (* Exercise 4.2 *)
 inductive palindrome :: "'a list \<Rightarrow> bool" where
   "palindrome []"
