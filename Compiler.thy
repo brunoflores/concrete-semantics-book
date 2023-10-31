@@ -73,7 +73,8 @@ values
     [LOAD ''y'', STORE ''x''] \<turnstile>
     (0, <''x'' := 3, ''y'' := 4>, []) \<rightarrow>* (i, t, stk)}"
 
-(* Show that execution results are preserved if we append
+(* To argue about the execution of code that is embedded in
+   larger programs, show that execution results are preserved if we append
    additional code to the left or right of a program. *)
 lemma iexec_shift [simp]:
   "((n+i', s', stk') = iexec x (n+i, s, stk)) = ((i', s', stk') = iexec x (i, s, stk))"
@@ -84,5 +85,20 @@ by (auto simp: exec1_def)
 
 lemma exec_appendR: "P \<turnstile> c \<rightarrow>* c' \<Longrightarrow> P@P' \<turnstile> c \<rightarrow>* c'"
 by (induction rule: star.induct) (fastforce intro: star.step exec1_appendR)+
+
+lemma exec1_appendL:
+  fixes i i' :: int
+  shows
+  "P \<turnstile> (i,s,stk) \<rightarrow> (i',s',stk') \<Longrightarrow>
+   P' @ P \<turnstile> (size(P')+i,s,stk) \<rightarrow> (size(P')+i',s',stk')"
+unfolding exec1_def
+by (auto simp del: iexec.simps)
+
+lemma exec_appendL:
+  fixes i i' :: int
+  shows
+ "P \<turnstile> (i,s,stk) \<rightarrow>* (i',s',stk')  \<Longrightarrow>
+  P' @ P \<turnstile> (size(P')+i,s,stk) \<rightarrow>* (size(P')+i',s',stk')"
+by (induction rule: exec_induct) (blast intro: star.step exec1_appendL)+
 
 end
