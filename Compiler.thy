@@ -24,6 +24,7 @@ datatype instr =
   LOADI int
 | LOAD vname
 | ADD
+| MUL
 | STORE vname
 | JMP int
 | JMPLESS int (* Compare two topmost stack elements and jump if
@@ -44,6 +45,7 @@ fun iexec :: "instr \<Rightarrow> config \<Rightarrow> config" where
        LOADI n \<Rightarrow> (i+1, s, n # stk)
      | LOAD x \<Rightarrow> (i+1, s, s x # stk)
      | ADD \<Rightarrow> (i+1, s, (hd2 stk + hd stk) # tl2 stk)
+     | MUL \<Rightarrow> (i+1, s, (hd2 stk * hd stk) # tl2 stk)
      | STORE x \<Rightarrow> (i+1, s(x := hd stk), tl stk)
      | JMP n \<Rightarrow>  (i+1+n, s, stk)
      | JMPLESS n \<Rightarrow> (if hd2 stk < hd stk then i+1+n else i+1, s, tl2 stk)
@@ -136,5 +138,18 @@ lemma exec_append_trans [intro]:
 by (metis star_trans[OF exec_appendR exec_appendL_if])
 
 declare Let_def [simp]
+
+(* Compilation *)
+
+(* Arithmetic expressions *)
+fun acomp :: "aexp \<Rightarrow> instr list" where
+  "acomp (N n) = [LOADI n]"
+| "acomp (V x) = [LOAD x]"
+| "acomp (Plus a1 a2) = acomp a1 @ acomp a2 @ [ADD]"
+| "acomp (Times a1 a2) = acomp a1 @ acomp a2 @ [MUL]"
+
+lemma acomp_correct [intro]:
+  "acomp a \<turnstile> (0, s, stk) \<rightarrow>* (size(acomp a), s, (aval a s) # stk)"
+by (induction a arbitrary: stk) fastforce+
 
 end
