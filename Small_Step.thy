@@ -152,4 +152,24 @@ theorem big_iff_small:
   "cs \<Rightarrow> t = cs \<rightarrow>* (SKIP, t)"
 by (metis big_to_small small_to_big)
 
+(* Final configurations *)
+definition "final cs \<longleftrightarrow> \<not>(\<exists>cs'. cs \<rightarrow> cs')"
+thm final_def
+
+(* In our semantics, these happen to be exactly the configurations
+   that have SKIP as their command. *)
+lemma finalD: "final (c,s) \<Longrightarrow> c = SKIP"
+  apply(simp add: final_def)
+  apply(induction c)
+  apply blast+
+done
+
+lemma final_iff_SKIP: "final (c, s) = (c = SKIP)"
+by (metis SkipE finalD final_def)
+
+(* Show that \<Rightarrow> yields a final state iff \<rightarrow> terminates. *)
+lemma big_iff_small_termination:
+  "(\<exists>t. cs \<Rightarrow> t) \<longleftrightarrow> (\<exists>cs'. cs \<rightarrow>* cs' \<and> final cs')"
+by (simp add: big_iff_small final_iff_SKIP)
+
 end
