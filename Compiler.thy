@@ -39,13 +39,15 @@ abbreviation "hd2 xs == hd(tl xs)"
 abbreviation "tl2 xs == tl(tl xs)"
 
 fun iexec :: "instr \<Rightarrow> config \<Rightarrow> config" where
-  "iexec (LOADI n) (i, s, stk)   = (i + 1, s, n # stk)"
-| "iexec (LOAD x) (i, s, stk)    = (i +1, s, s x # stk)"
-| "iexec ADD (i, s, stk)         = (i + 1, s, (hd2 stk + hd stk) # tl2 stk)"
-| "iexec (STORE x) (i, s, stk)   = (i + 1, s(x := hd stk), tl stk)"
-| "iexec (JMP n) (i, s, stk)     = (i + 1 + n, s, stk)"
-| "iexec (JMPLESS n) (i, s, stk) = (if hd2 stk < hd stk then i + 1 + n else i + 1, s, tl2 stk)"
-| "iexec (JMPGE n) (i, s, stk)   = (if hd stk \<le> hd2 stk then i + 1 + n else i + 1, s, tl2 stk)"
+  "iexec instr (i,s,stk) =
+    (case instr of
+       LOADI n \<Rightarrow> (i+1, s, n # stk)
+     | LOAD x \<Rightarrow> (i+1, s, s x # stk)
+     | ADD \<Rightarrow> (i+1, s, (hd2 stk + hd stk) # tl2 stk)
+     | STORE x \<Rightarrow> (i+1, s(x := hd stk), tl stk)
+     | JMP n \<Rightarrow>  (i+1+n, s, stk)
+     | JMPLESS n \<Rightarrow> (if hd2 stk < hd stk then i+1+n else i+1, s, tl2 stk)
+     | JMPGE n \<Rightarrow> (if hd2 stk >= hd stk then i+1+n else i+1, s, tl2 stk))"
 
 definition exec1 :: "instr list \<Rightarrow> config \<Rightarrow> config \<Rightarrow> bool" ("(_/ \<turnstile> (_ \<rightarrow>/ _))" [59,0,59] 60)
 where
