@@ -38,7 +38,7 @@ thm ex
 thm ex [simplified]
 
 (* We want to execute the big-step rules *)
-code_pred big_step.
+code_pred big_step .
 
 values "{t. (SKIP, \<lambda>_. 0) \<Rightarrow> t}"
 values "{map t [''x''] |t. (SKIP, <''x'' := 42>) \<Rightarrow> t}"

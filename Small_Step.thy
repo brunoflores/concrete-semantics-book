@@ -18,4 +18,32 @@ abbreviation
   small_steps :: "com * state \<Rightarrow> com * state \<Rightarrow> bool" (infix "\<rightarrow>*" 55)
 where "x \<rightarrow>* y \<equiv> star small_step x y"
 
+(* Execution *)
+code_pred small_step .
+
+values "{ (c', map t [''x'',''y'',''z'']) |c' t.
+  (''x'' ::= V ''z'';; ''y'' ::= V ''x'', <''x'' := 3, ''y'' := 7, ''z'' := 5>)
+  \<rightarrow>* (c',t) }"
+
+lemmas small_step_induct = small_step.induct[split_format(complete)]
+
+(* Proof automation *)
+declare small_step.intros[simp, intro]
+
+(* Rule inversion *)
+inductive_cases SkipE[elim!]: "(SKIP, s) \<rightarrow> ct"
+thm SkipE
+inductive_cases AssignE[elim!]: "(x ::= a, s) \<rightarrow> ct"
+thm AssignE
+inductive_cases SeqE[elim]: "(c1;; c2, s) \<rightarrow> ct"
+thm SeqE
+inductive_cases IfE[elim!]: "(IF b THEN c1 ELSE c2, s) \<rightarrow> ct"
+inductive_cases WhileE[elim]: "(WHILE b DO c, s) \<rightarrow> ct"
+
+lemma deterministic:
+  "cs \<rightarrow> cs' \<Longrightarrow> cs \<rightarrow> cs'' \<Longrightarrow> cs'' = cs'"
+  apply(induction arbitrary: cs'' rule: small_step.induct)
+  apply blast+
+done
+
 end
