@@ -131,7 +131,7 @@ next
 next
   case WhileTrue
   thus ?case
-    by(metis While seq_comp small_step.IfTrue star.step[of small_step])
+    by (metis While seq_comp small_step.IfTrue star.step[of small_step])
 qed
 
 end
