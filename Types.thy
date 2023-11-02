@@ -44,4 +44,29 @@ inductive tbval :: "bexp \<Rightarrow> state \<Rightarrow> bool \<Rightarrow> bo
 | "taval a1 s (Rv r1) \<Longrightarrow> taval a2 s (Rv r2) \<Longrightarrow>
    tbval (Less a1 a2) s (r1 < r2)"
 
+(* Commands *)
+
+datatype com =
+  SKIP
+| Assign vname aexp    ("_ ::= _" [1000, 61] 61)
+| Seq com  com         ("_;; _"  [60, 61] 60)
+| If  bexp com com     ("IF _ THEN _ ELSE _"  [0, 0, 61] 61)
+| While bexp com       ("WHILE _ DO _"  [0, 61] 61)
+
+(* Small-step semantics of commands *)
+
+inductive small_step :: "(com \<times> state) \<Rightarrow> (com \<times> state) \<Rightarrow> bool"
+(infix "\<rightarrow>" 55) where
+  Assign:  "taval a s v \<Longrightarrow> (x ::= a, s) \<rightarrow> (SKIP, s(x := v))"
+
+| Seq1:   "(SKIP;; c, s) \<rightarrow> (c, s)"
+| Seq2:   "(c1, s) \<rightarrow> (c1', s') \<Longrightarrow> (c1;; c2, s) \<rightarrow> (c1';; c2, s')"
+
+| IfTrue:  "tbval b s True \<Longrightarrow> (IF b THEN c1 ELSE c2, s) \<rightarrow> (c1, s)"
+| IfFalse: "tbval b s False \<Longrightarrow> (IF b THEN c1 ELSE c2, s) \<rightarrow> (c2, s)"
+
+| While:   "(WHILE b DO c, s) \<rightarrow> (IF b THEN c;; WHILE b DO c ELSE SKIP, s)"
+
+lemmas small_step_induct = small_step.induct[split_format(complete)]
+
 end
