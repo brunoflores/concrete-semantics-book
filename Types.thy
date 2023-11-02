@@ -60,13 +60,20 @@ inductive small_step :: "(com \<times> state) \<Rightarrow> (com \<times> state)
   Assign:  "taval a s v \<Longrightarrow> (x ::= a, s) \<rightarrow> (SKIP, s(x := v))"
 
 | Seq1:   "(SKIP;; c, s) \<rightarrow> (c, s)"
-| Seq2:   "(c1, s) \<rightarrow> (c1', s') \<Longrightarrow> (c1;; c2, s) \<rightarrow> (c1';; c2, s')"
+| Seq2:   "(c1, s) \<rightarrow> (c1', s') \<Longrightarrow>
+           (c1;; c2, s) \<rightarrow> (c1';; c2, s')"
 
-| IfTrue:  "tbval b s True \<Longrightarrow> (IF b THEN c1 ELSE c2, s) \<rightarrow> (c1, s)"
-| IfFalse: "tbval b s False \<Longrightarrow> (IF b THEN c1 ELSE c2, s) \<rightarrow> (c2, s)"
+| IfTrue:  "tbval b s True \<Longrightarrow>
+            (IF b THEN c1 ELSE c2, s) \<rightarrow> (c1, s)"
+| IfFalse: "tbval b s False \<Longrightarrow>
+            (IF b THEN c1 ELSE c2, s) \<rightarrow> (c2, s)"
 
 | While:   "(WHILE b DO c, s) \<rightarrow> (IF b THEN c;; WHILE b DO c ELSE SKIP, s)"
 
 lemmas small_step_induct = small_step.induct[split_format(complete)]
+
+(* The type system *)
+
+
 
 end
