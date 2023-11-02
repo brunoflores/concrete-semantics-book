@@ -18,11 +18,11 @@ datatype aexp = Ic int | Rc real | V vname | Plus aexp aexp
 inductive taval :: "aexp \<Rightarrow> state \<Rightarrow> val \<Rightarrow> bool" where
   "taval (Ic i) _ (Iv i)"
 | "taval (Rc r) _ (Rv r)"
-| "taval (V x) _ (s x)"
-| "taval a\<^sub>1 s (Iv i\<^sub>1) \<Longrightarrow> taval a\<^sub>2 s (Iv i\<^sub>2) \<Longrightarrow>
-   taval (Plus a\<^sub>1 a\<^sub>2) s (Iv (i\<^sub>1 + i\<^sub>2))"
-| "taval a\<^sub>1 s (Rv r\<^sub>1) \<Longrightarrow> taval a\<^sub>2 s (Rv r\<^sub>2) \<Longrightarrow>
-   taval (Plus a\<^sub>1 a\<^sub>2) s (Rv (r\<^sub>1 + r\<^sub>2))"
+| "taval (V x) s (s x)"
+| "taval a\<^sub>1 s (Iv i\<^sub>1) \<Longrightarrow> taval a\<^sub>2 s (Iv i\<^sub>2)
+   \<Longrightarrow> taval (Plus a\<^sub>1 a\<^sub>2) s (Iv (i\<^sub>1 + i\<^sub>2))"
+| "taval a\<^sub>1 s (Rv r\<^sub>1) \<Longrightarrow> taval a\<^sub>2 s (Rv r\<^sub>2)
+   \<Longrightarrow> taval (Plus a\<^sub>1 a\<^sub>2) s (Rv (r\<^sub>1 + r\<^sub>2))"
 
 inductive_cases [elim!]:
   "taval (Ic i) s v"
