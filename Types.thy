@@ -109,7 +109,7 @@ inductive_cases [elim!]:
   "\<Gamma> \<turnstile> Less a1 a2"
 
 inductive ctyping :: "tyenv \<Rightarrow> com \<Rightarrow> bool" (infix "\<turnstile>" 50) where
-  Skip_ty: "_ \<turnstile> SKIP"
+  Skip_ty: "s \<turnstile> SKIP"
 | Assign_ty: "\<Gamma> \<turnstile> a : \<Gamma> x \<Longrightarrow> \<Gamma> \<turnstile> x ::= a"
 | Seq_ty: "\<Gamma> \<turnstile> c1 \<Longrightarrow> \<Gamma> \<turnstile> c2 \<Longrightarrow>
            \<Gamma> \<turnstile> c1;; c2"
@@ -124,5 +124,34 @@ inductive_cases [elim!]:
   "\<Gamma> \<turnstile> c1;; c2"
   "\<Gamma> \<turnstile> IF b THEN c1 ELSE c2"
   "\<Gamma> \<turnstile> WHILE b DO c"
+
+(* Well-types programs do not get stuck *)
+(* (Sound) *)
+
+fun type :: "val \<Rightarrow> ty" where
+  "type (Iv i) = Ity"
+| "type (Rv r) = Rty"
+
+(* Here we talk about whether a state s conforms to a typing
+   environment \<Gamma> *)
+lemma type_eq_Ity[simp]:
+"type v = Ity \<longleftrightarrow> (\<exists>i. v = Iv i)"
+by (cases v) simp_all
+
+lemma type_eq_Rty[simp]:
+"type v = Rty \<longleftrightarrow> (\<exists>r. v = Rv r)"
+by (cases v) simp_all
+
+(* For all variables, the type of the runtime value must be exactly
+   the type predicted in the typing environment. *)
+definition styping :: "tyenv \<Rightarrow> state \<Rightarrow> bool" (infix "\<turnstile>" 50) where
+"\<Gamma> \<turnstile> s  \<longleftrightarrow>  (\<forall>x. type (s x) = \<Gamma> x)"
+
+(* Preservation for arithmetic expressions *)
+lemma apreservation:
+  "\<Gamma> \<turnstile> a : \<tau> \<Longrightarrow> taval a s v \<Longrightarrow> \<Gamma> \<turnstile> s \<Longrightarrow> type v = \<tau>"
+  apply(induction arbitrary: v rule: atyping.induct)
+  apply (fastforce simp: styping_def)+
+done
 
 end
