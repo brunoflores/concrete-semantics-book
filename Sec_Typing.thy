@@ -168,4 +168,32 @@ next
   qed
 qed
 
+(* The standard type system *)
+inductive sec_type' :: "nat \<Rightarrow> com \<Rightarrow> bool" ("(_/ \<turnstile>'' _)" [0, 0] 50) where
+  Skip':      "l \<turnstile>' SKIP"
+| Assign':    "\<lbrakk> sec x \<ge> sec a; sec x \<ge> l \<rbrakk> \<Longrightarrow> l \<turnstile>' x ::= a"
+| Seq':       "\<lbrakk> l \<turnstile>' c\<^sub>1;  l \<turnstile>' c\<^sub>2 \<rbrakk> \<Longrightarrow> l \<turnstile>' c\<^sub>1;;c\<^sub>2"
+| If':        "\<lbrakk> sec b \<le> l;  l \<turnstile>' c\<^sub>1;  l \<turnstile>' c\<^sub>2 \<rbrakk> \<Longrightarrow> l \<turnstile>' IF b THEN c\<^sub>1 ELSE c\<^sub>2"
+| While':     "\<lbrakk> sec b \<le> l;  l \<turnstile>' c \<rbrakk> \<Longrightarrow> l \<turnstile>' WHILE b DO c"
+| anti_mono': "\<lbrakk> l \<turnstile>' c;  l' \<le> l \<rbrakk> \<Longrightarrow> l' \<turnstile>' c"
+
+(* The equivalence proof goes by rule induction on the respective
+   type system in each direction separately. *)
+lemma sec_type_sec_type': "l \<turnstile> c \<Longrightarrow> l \<turnstile>' c"
+  apply (induction rule: sec_type.induct)
+  apply (metis Skip')
+  apply (metis Assign')
+  apply (metis Seq')
+  apply (metis max.commute max.absorb_iff2 nat_le_linear If' anti_mono')
+by (metis less_or_eq_imp_le max.absorb1 max.absorb2 nat_le_linear While' anti_mono')
+
+lemma sec_type'_sec_type: "l \<turnstile>' c \<Longrightarrow> l \<turnstile> c"
+  apply (induction rule: sec_type'.induct)
+  apply (metis Skip)
+  apply (metis Assign)
+  apply (metis Seq)
+  apply (metis max.absorb2 If)
+  apply (metis max.absorb2 While)
+by (metis anti_mono)
+
 end
