@@ -196,4 +196,35 @@ lemma sec_type'_sec_type: "l \<turnstile>' c \<Longrightarrow> l \<turnstile> c"
   apply (metis max.absorb2 While)
 by (metis anti_mono)
 
+(* A bottom-up typing system.
+   We can read \<turnstile> c : l as c has a write-effect of l, meaning that
+   no variable below l is written to in c.
+
+   We compute the greatest l consistent with variable assignments and
+   check this value at IF and WHILE commands. *)
+inductive sec_type2 :: "com \<Rightarrow> level \<Rightarrow> bool" ("(\<turnstile> _ : _)" [0, 0] 50) where
+  Skip2:   "\<turnstile> SKIP : l"
+| Assign2: "sec x \<ge> sec a \<Longrightarrow> \<turnstile> x ::= a : sec x"
+| Seq2:    "\<lbrakk> \<turnstile> c\<^sub>1 : l\<^sub>1;  \<turnstile> c\<^sub>2 : l\<^sub>2 \<rbrakk> \<Longrightarrow> \<turnstile> c\<^sub>1;; c\<^sub>2 : min l\<^sub>1 l\<^sub>2 "
+| If2:     "\<lbrakk> sec b \<le> min l\<^sub>1 l\<^sub>2;  \<turnstile> c\<^sub>1 : l\<^sub>1;  \<turnstile> c\<^sub>2 : l\<^sub>2 \<rbrakk> \<Longrightarrow>
+            \<turnstile> IF b THEN c\<^sub>1 ELSE c\<^sub>2 : min l\<^sub>1 l\<^sub>2"
+| While2:  "\<lbrakk> sec b \<le> l;  \<turnstile> c : l \<rbrakk> \<Longrightarrow> \<turnstile> WHILE b DO c : l"
+
+lemma sec_type2_sec_type': "\<turnstile> c : l \<Longrightarrow> l \<turnstile>' c"
+  apply (induction rule: sec_type2.induct)
+  apply (metis Skip')
+  apply (metis Assign' eq_imp_le)
+  apply (metis Seq' anti_mono' min.cobounded1 min.cobounded2)
+  apply (metis If' anti_mono' min.absorb2 min.absorb_iff1 nat_le_linear)
+by (metis While')
+
+lemma sec_type'_sec_type2: "l \<turnstile>' c \<Longrightarrow> \<exists> l' \<ge> l. \<turnstile> c : l'"
+  apply (induction rule: sec_type'.induct)
+  apply (metis Skip2 le_refl)
+  apply (metis Assign2)
+  apply (metis Seq2 min.boundedI)
+  apply (metis If2 inf_greatest inf_nat_def le_trans)
+  apply (metis While2 le_trans)
+by (metis le_trans)
+
 end
