@@ -60,6 +60,8 @@ next
   thus ?case using WhileTrue by metis
 qed
 
+(* If our type system says yes, our data is safe: there will be no
+   information flowing from high to low variables. *)
 theorem noninterference:
   "\<lbrakk> (c, s) \<Rightarrow> s'; (c, t) \<Rightarrow> t';  0 \<turnstile> c;  s = t (\<le> l) \<rbrakk> \<Longrightarrow> s' = t' (\<le> l)"
 (* By induction on the big-step execution. *)
