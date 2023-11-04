@@ -2,6 +2,8 @@ theory Def_Init imports Vars Com begin
 
 (* Definite initialization analysis *)
 
+(* Inductively define this analysis with one rule per
+   syntactic construct. *)
 inductive D :: "vname set \<Rightarrow> com \<Rightarrow> vname set \<Rightarrow> bool" where
   Skip:   "D A SKIP A"
 | Assign: "vars a \<subseteq> A \<Longrightarrow>
