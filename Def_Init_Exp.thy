@@ -28,10 +28,14 @@ fun bval :: "bexp \<Rightarrow> state \<Rightarrow> bool option" where
       (Some i\<^sub>1, Some i\<^sub>2) \<Rightarrow> Some(i\<^sub>1 < i\<^sub>2)
      | _ \<Rightarrow> None)"
 
+(* Expressions evaluate without failure if they only mention
+   initialised variables. *)
 lemma aval_Some: "vars a \<subseteq> dom s \<Longrightarrow> \<exists> i. aval a s = Some i"
+(* By structural induction on the expression *)
 by (induct a) auto
 
 lemma bval_Some: "vars b \<subseteq> dom s \<Longrightarrow> \<exists> bv. bval b s = Some bv"
+(* By structural induction on the expression *)
 by (induct b) (auto dest!: aval_Some)
 
 end
